@@ -14,19 +14,28 @@ let transporter = nodemailer.createTransport({
   auth: {
     user: email,
     pass: password
-  }
+  },
+  proxy: process.env.http_proxy
 });
 
-console.log("using url:");
-console.log(process.argv[2]);
+let parsedUrlArr = process.argv[2].match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/gm);
+if (parsedUrlArr.length < 1) {
+  console.log('Unable to parse url');
+  console.log(parsedUrlArr);
+  process.exit(1);
+}
 
-Mercury.parse(process.argv[2]).then((result) => {
+let url = parsedUrlArr[0];
+console.log("using url:");
+console.log(url);
+
+Mercury.parse(url).then((result) => {
   if (result.error) {console.log("error parsing:"); return console.log(result.message)};
 
   console.log("mercury parsed;");
 
   let fn = `${result.title.replace(/[\W_]+/g, "_")}.html`;
-  let fp = `${process.argv[1].replace("\\index.js", "")}/archive/${fn}`;
+  let fp = `${process.argv[1].replace(/(\\index.js)|(\/index.js)/gm, "")}/archive/${fn}`;
 
   let content = `<!DOCTYPE html><html><head><title>${result.title}</title><meta name="author" content="${result.author}"></head><body>`;
   // remove images and links
